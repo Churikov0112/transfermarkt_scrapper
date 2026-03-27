@@ -8,7 +8,7 @@ import requests
 from tm_common import load_json, request_with_retries, save_json
 
 PLAYERS_FILE = "tm_players.json"
-MARKET_VALUES_FILE = "tm_market_values.json"
+PLAYERS_WITH_MARKET_VALUES_FILE = "tm_players_with_market_values.json"
 API_BASE_URL = "http://localhost:8000"
 MAX_WORKERS = int(os.getenv("TM_MARKET_WORKERS", "12"))
 REQUEST_DELAY_SEC = float(os.getenv("TM_MARKET_REQUEST_DELAY", "0"))
@@ -46,7 +46,25 @@ def fetch_market_value(player_id, max_retries=MAX_RETRIES):
         return None
 
 
-def fetch_for_player(player):
+def calc_max_market_value(market_value_data):
+    if not isinstance(market_value_data, dict):
+        return None
+    history = market_value_data.get("marketValueHistory")
+    if not isinstance(history, list):
+        return None
+
+    max_value = None
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        value = item.get("marketValue")
+        if isinstance(value, int):
+            if max_value is None or value > max_value:
+                max_value = value
+    return max_value
+
+
+def fetch_for_player(index, player):
     player_id = player.get("id")
     if not player_id:
         return None
@@ -56,13 +74,8 @@ def fetch_for_player(player):
     if REQUEST_DELAY_SEC > 0:
         time.sleep(REQUEST_DELAY_SEC)
 
-    return {
-        "id": player_id,
-        "name": player.get("name"),
-        "team_id": player.get("team_id"),
-        "team_name": player.get("team_name"),
-        "market_value": market_value_data,
-    }
+    max_market_value = calc_max_market_value(market_value_data)
+    return index, market_value_data, max_market_value
 
 
 def main():
@@ -74,12 +87,13 @@ def main():
     print(f"[3/3 MT] Получаем market values для {len(players)} игроков")
     print(f"Потоков: {MAX_WORKERS}")
 
-    results = []
+    results = {}
+    results_max = {}
     futures = {}
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         for index, player in enumerate(players, 1):
-            future = executor.submit(fetch_for_player, player)
+            future = executor.submit(fetch_for_player, index, player)
             futures[future] = (index, player)
 
         for done_count, future in enumerate(as_completed(futures), 1):
@@ -89,18 +103,26 @@ def main():
             try:
                 item = future.result()
                 if item:
-                    results.append((index, item))
+                    result_index, market_value_data, max_market_value = item
+                    results[result_index] = market_value_data
+                    results_max[result_index] = max_market_value
                     print(f"[{done_count}/{len(players)}] OK id={player_id} name={name}")
                 else:
                     print(f"[{done_count}/{len(players)}] SKIP id={player_id} name={name}")
             except Exception as exc:
                 print(f"[{done_count}/{len(players)}] ERROR id={player_id} name={name}: {exc}")
 
-    results.sort(key=lambda x: x[0])
-    market_values = [item[1] for item in results]
+    for index, player in enumerate(players, 1):
+        if index in results:
+            market_value_data = results[index]
+            if market_value_data is not None:
+                player["market_value"] = market_value_data
+                max_market_value = results_max.get(index)
+                if max_market_value is not None:
+                    player["max_market_value"] = max_market_value
 
-    save_json(MARKET_VALUES_FILE, market_values)
-    print(f"\nСохранено: {MARKET_VALUES_FILE} ({len(market_values)} записей)")
+    save_json(PLAYERS_WITH_MARKET_VALUES_FILE, players)
+    print(f"\nСохранено: {PLAYERS_WITH_MARKET_VALUES_FILE} ({len(players)} игроков)")
 
 
 if __name__ == "__main__":
