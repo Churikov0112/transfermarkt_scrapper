@@ -146,6 +146,7 @@ def parse_team_page(session, team_url):
         "id": team_id,
         "name": team_name,
         "logo_url": logo_url,
+        "players_ids": [p["id"] for p in players],
     }
 
     return team_data, players, skipped_default
