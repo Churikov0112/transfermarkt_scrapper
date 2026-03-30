@@ -7,8 +7,9 @@ import requests
 
 from tm_common import load_json, request_with_retries, save_json
 
-PLAYERS_FILE = "tm_players.json"
+PLAYERS_FILE = "tm_players_urls.json"
 PLAYERS_PROFILES_FILE = "tm_players_profiles.json"
+CLUBS_URLS_FILE = "tm_clubs_urls.json"
 API_BASE_URL = "http://localhost:8000"
 MAX_WORKERS = int(os.getenv("TM_PLAYERS_PROFILES_WORKERS", "12"))
 REQUEST_DELAY_SEC = float(os.getenv("TM_PLAYERS_PROFILES_REQUEST_DELAY", "0"))
@@ -96,9 +97,32 @@ def main():
 
     results.sort(key=lambda x: x[0])
     profiles = [item[1] for item in results]
+    clubs_by_id = {}
+
+    for item in profiles:
+        profile = item.get("profile")
+        if not isinstance(profile, dict):
+            continue
+
+        club = profile.get("club")
+        if not isinstance(club, dict):
+            continue
+
+        club_id = club.get("id")
+        if not club_id:
+            continue
+
+        club_id = str(club_id)
+        if club_id not in clubs_by_id:
+            clubs_by_id[club_id] = {
+                "id": club_id,
+                "name": club.get("name"),
+            }
 
     save_json(PLAYERS_PROFILES_FILE, profiles)
+    save_json(CLUBS_URLS_FILE, list(clubs_by_id.values()))
     print(f"\nСохранено: {PLAYERS_PROFILES_FILE} ({len(profiles)} записей)")
+    print(f"Сохранено: {CLUBS_URLS_FILE} ({len(clubs_by_id)} клубов)")
 
 
 if __name__ == "__main__":

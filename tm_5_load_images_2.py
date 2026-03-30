@@ -8,7 +8,7 @@ from PIL import Image
 from tm_common import create_session, load_json, request_with_retries
 
 TEAMS_FILE = "tm_teams.json"
-PLAYERS_FILE = "tm_players.json"
+PLAYERS_FILE = "tm_players_urls.json"
 CLUBS_FILE = "tm_clubs.json"
 
 FLAGS_DIR = "flags"

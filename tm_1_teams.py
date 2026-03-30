@@ -59,6 +59,7 @@ def parse_players_on_team_page(soup, team_id, team_name):
             "id": player_id,
             "name": name_element.text.strip(),
             "url": player_url,
+            "photo_url": photo_url,
             "number": number,
             "team_id": team_id,
             "team_name": team_name,

@@ -4,8 +4,9 @@ import requests
 
 from tm_common import load_json, request_with_retries, save_json
 
-PLAYERS_FILE = "tm_players.json"
+PLAYERS_FILE = "tm_players_urls.json"
 PLAYERS_PROFILES_FILE = "tm_players_profiles.json"
+CLUBS_URLS_FILE = "tm_clubs_urls.json"
 API_BASE_URL = "http://localhost:8000"
 
 
@@ -38,6 +39,7 @@ def main():
     print(f"[7/7] Получаем профили игроков: {len(players)}")
 
     profiles = []
+    clubs_by_id = {}
     session = requests.Session()
     for index, player in enumerate(players, 1):
         player_id = player.get("id")
@@ -48,6 +50,18 @@ def main():
         print(f"[{index}/{len(players)}] id={player_id} name={player.get('name', '')}")
         profile = fetch_player_profile(session, player_id)
 
+        if isinstance(profile, dict):
+            club = profile.get("club")
+            if isinstance(club, dict):
+                club_id = club.get("id")
+                if club_id:
+                    club_id = str(club_id)
+                    if club_id not in clubs_by_id:
+                        clubs_by_id[club_id] = {
+                            "id": club_id,
+                            "name": club.get("name"),
+                        }
+
         profiles.append({
             "id": str(player_id),
             "name": player.get("name"),
@@ -57,7 +71,9 @@ def main():
         time.sleep(0.2)
 
     save_json(PLAYERS_PROFILES_FILE, profiles)
+    save_json(CLUBS_URLS_FILE, list(clubs_by_id.values()))
     print(f"\nСохранено: {PLAYERS_PROFILES_FILE} ({len(profiles)} записей)")
+    print(f"Сохранено: {CLUBS_URLS_FILE} ({len(clubs_by_id)} клубов)")
 
 
 if __name__ == "__main__":

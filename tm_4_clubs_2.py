@@ -7,7 +7,7 @@ import requests
 
 from tm_common import extract_id_from_url, load_json, request_with_retries, save_json
 
-CLUBS_URL_FILE = "tm_clubs_url.json"
+CLUBS_URL_FILE = "tm_clubs_urls.json"
 CLUBS_FILE = "tm_clubs.json"
 API_BASE_URL = "http://localhost:8000"
 MAX_WORKERS = int(os.getenv("TM_CLUBS_WORKERS", "10"))
