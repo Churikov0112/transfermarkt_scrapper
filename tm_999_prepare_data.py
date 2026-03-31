@@ -112,16 +112,26 @@ def add_max_market_to_profiles(profiles_path: str, max_values: Dict[str, int],
     return profiles
 
 
-def clean_players_profiles(profiles: List[Dict[str, Any]], player_to_team: Dict[str, Dict[str, str]]) -> List[
-    Dict[str, Any]]:
+def clean_players_profiles(profiles: List[Dict[str, Any]], player_to_team: Dict[str, Dict[str, str]],
+                           players_urls: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """
     Преобразует список профилей игроков:
-    - удаляет поля id и name на верхнем уровне
+    - приоритетно берет id и name из profile
+    - если profile пустой или нет полей, берет из корневого объекта
+    - если и там нет, берет из players_urls
     - переносит все поля из profile на верхний уровень
     - удаляет из полученного объекта указанные поля
     - добавляет club_id, club_name, team_id, team_name
     - сохраняет team_shirt_number (уже добавлен в profile на предыдущем этапе)
     """
+    # Создаем словарь для быстрого поиска в players_urls
+    urls_data = {}
+    if players_urls:
+        for player in players_urls:
+            player_id = player.get('id')
+            if player_id:
+                urls_data[player_id] = player
+
     cleaned = []
     fields_to_remove = {
         'fullName', 'updatedAt', 'url', 'description', 'nameInHomeCountry',
@@ -140,6 +150,26 @@ def clean_players_profiles(profiles: List[Dict[str, Any]], player_to_team: Dict[
 
         # Переносим все поля из profile на верхний уровень
         new_player = {**profile}
+
+        # Определяем id и name с приоритетом: profile > корневой объект > players_urls
+        player_id_final = None
+        player_name_final = None
+
+        if player_id and player_id in urls_data:
+            player_id_final = urls_data[player_id].get('id')
+            player_name_final = urls_data[player_id].get('name')
+        elif player.get('id'):
+            player_id_final = player.get('id')
+            player_name_final = player.get('name')
+        elif profile.get('id'):
+            player_id_final = profile.get('id')
+            player_name_final = profile.get('name')
+
+        # Добавляем финальные id и name
+        if player_id_final:
+            new_player['id'] = player_id_final
+        if player_name_final:
+            new_player['name'] = player_name_final
 
         # Удаляем shirtNumber, если он есть (так как мы его не используем)
         new_player.pop('shirtNumber', None)
@@ -231,6 +261,12 @@ def main():
     # 0.1. Загружаем номера сборной из tm_players_urls
     team_numbers = load_players_urls(players_urls_file)
 
+    # 0.2. Загружаем полные данные из tm_players_urls для резервных данных
+    players_urls_data = None
+    if os.path.exists(players_urls_file):
+        players_urls_data = load_json(players_urls_file)
+        print(f"Загружены данные из {players_urls_file} для {len(players_urls_data)} игроков")
+
     # 1. Добавляем maxMarketValue в market values и сохраняем
     if os.path.exists(market_values_file):
         print(f"Обработка {market_values_file}...")
@@ -256,37 +292,50 @@ def main():
     # 3. Очищаем профили игроков и сохраняем
     if profiles_with_max:
         print("Создание prepared_tm_players_profiles.json...")
-        cleaned_profiles = clean_players_profiles(profiles_with_max, player_to_team)
+        cleaned_profiles = clean_players_profiles(profiles_with_max, player_to_team, players_urls_data)
         save_json(cleaned_profiles, "prepared_tm_players_profiles.json")
         print(f"Сохранено {len(cleaned_profiles)} записей")
 
-        # Выводим статистику по заполненным командам
+        # Выводим статистику
+        players_with_id = sum(1 for p in cleaned_profiles if p.get('id') is not None)
+        players_with_name = sum(1 for p in cleaned_profiles if p.get('name') is not None)
         teams_filled = sum(1 for p in cleaned_profiles if p.get('team_id') is not None)
-        print(f"Из них {teams_filled} игроков имеют информацию о национальной команде")
-
-        # Выводим статистику по номерам сборной
         team_numbers_filled = sum(1 for p in cleaned_profiles if p.get('team_shirt_number') is not None)
-        print(f"Из них {team_numbers_filled} игроков имеют номер в сборной")
+        club_filled = sum(1 for p in cleaned_profiles if p.get('club_id') is not None)
+
+        print(f"  - Игроков с id: {players_with_id}")
+        print(f"  - Игроков с name: {players_with_name}")
+        print(f"  - Игроков с информацией о национальной команде: {teams_filled}")
+        print(f"  - Игроков с номером в сборной: {team_numbers_filled}")
+        print(f"  - Игроков с информацией о клубе: {club_filled}")
+
+        # Выводим примеры пустых профилей
+        empty_profiles = [p for p in cleaned_profiles if len(p) <= 10]  # Если очень мало полей
+        if empty_profiles:
+            print(f"\nВнимание: {len(empty_profiles)} игроков имеют очень мало данных")
+            if len(empty_profiles) <= 5:
+                for p in empty_profiles[:3]:
+                    print(f"  Пример: id={p.get('id')}, name={p.get('name')}, team={p.get('team_name')}")
 
     # 4. Очищаем клубы и сохраняем
     if os.path.exists(clubs_file):
-        print(f"Обработка {clubs_file}...")
+        print(f"\nОбработка {clubs_file}...")
         cleaned_clubs = clean_clubs(clubs_file)
         save_json(cleaned_clubs, "prepared_tm_clubs.json")
         print(f"Сохранено {len(cleaned_clubs)} записей")
     else:
-        print(f"Файл {clubs_file} не найден. Пропускаем.")
+        print(f"\nФайл {clubs_file} не найден. Пропускаем.")
 
     # 5. Очищаем команды и сохраняем
     if os.path.exists(teams_file):
-        print(f"Обработка {teams_file}...")
+        print(f"\nОбработка {teams_file}...")
         cleaned_teams = clean_teams(teams_file)
         save_json(cleaned_teams, "prepared_tm_teams.json")
         print(f"Сохранено {len(cleaned_teams)} записей")
     else:
-        print(f"Файл {teams_file} не найден. Пропускаем.")
+        print(f"\nФайл {teams_file} не найден. Пропускаем.")
 
-    print("Готово!")
+    print("\nГотово!")
 
 
 if __name__ == "__main__":
