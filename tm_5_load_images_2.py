@@ -48,7 +48,11 @@ def ensure_dirs():
 def to_high_res_player_url(url):
     if not url:
         return None
-    return url.replace("/header/", "/big/")
+    if "/header/" in url:
+        return url.replace("/header/", "/big/")
+    if "/medium/" in url:
+        return url.replace("/medium/", "/big/")
+    return None
 
 
 def download_as_png(url, output_path, timeout=30, max_retries=MAX_RETRIES):
