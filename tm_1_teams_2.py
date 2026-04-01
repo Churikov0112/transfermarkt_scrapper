@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin
 from urllib.parse import urlsplit, urlunsplit
 
+import requests
+
 from tm_common import (
     NATIONAL_TEAMS_URL,
     build_absolute_url,
@@ -12,12 +14,16 @@ from tm_common import (
     extract_id_from_url,
     get_soup,
     save_json,
+    request_with_retries,
 )
 
 TEAMS_FILE = "tm_teams.json"
 PLAYERS_URLS_FILE = "tm_players_urls.json"
+COACHES_PROFILES_FILE = "tm_coach_profiles.json"
+API_BASE_URL = "http://localhost:8000"
 MAX_WORKERS = int(os.getenv("TM_TEAMS_WORKERS", "8"))
 REQUEST_DELAY_SEC = float(os.getenv("TM_TEAMS_REQUEST_DELAY", "0"))
+MAX_RETRIES = int(os.getenv("TM_COACHES_MAX_RETRIES", "3"))
 include_list = [
     # "url_1",
     # "url_2",
@@ -34,6 +40,14 @@ def get_thread_session():
     return session
 
 
+def get_thread_requests_session():
+    session = getattr(_thread_local, "requests_session", None)
+    if session is None:
+        session = requests.Session()
+        _thread_local.requests_session = session
+    return session
+
+
 def extract_player_photo_url(row):
     img = row.select_one("td:nth-child(2) > table img") or row.select_one("td:nth-child(2) img")
     if not img:
@@ -43,6 +57,64 @@ def extract_player_photo_url(row):
 
 def is_default_photo(photo_url):
     return "default" in (photo_url or "").lower()
+
+
+def fetch_coach_profile(coach_id, max_retries=MAX_RETRIES):
+    """Получает профиль тренера через локальный API"""
+    api_url = f"{API_BASE_URL}/coaches/{coach_id}/profile"
+    session = get_thread_requests_session()
+
+    try:
+        response = request_with_retries(
+            session,
+            "GET",
+            api_url,
+            timeout=15,
+            max_retries=max_retries,
+            retry_statuses={503},
+        )
+        if response.status_code == 503:
+            return None
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException:
+        return None
+
+
+def extract_coach_id_from_staff_page(team_id):
+    """
+    Получает ID тренера со страницы сотрудников команды
+    URL: https://www.transfermarkt.com/-/mitarbeiter/verein/{team_id}
+    """
+    staff_url = f"https://www.transfermarkt.com/-/mitarbeiter/verein/{team_id}"
+    session = get_thread_session()
+
+    try:
+        soup = get_soup(session, staff_url)
+
+        # Ищем ссылку на главного тренера
+        coach_link = soup.select_one(
+            "div.large-8.columns table.inline-table tr:first-child td:nth-child(2) a[href*='/trainer/']")
+
+        if not coach_link:
+            coach_link = soup.select_one("a[href*='/profil/trainer/']")
+
+        if not coach_link:
+            return None
+
+        coach_url = coach_link.get("href")
+
+        # Извлекаем ID из URL
+        coach_id = None
+        if "/trainer/" in coach_url:
+            coach_id = coach_url.split("/trainer/")[-1].split("/")[0]
+        elif "/profil/trainer/" in coach_url:
+            coach_id = coach_url.split("/profil/trainer/")[-1].split("/")[0]
+
+        return coach_id
+
+    except Exception:
+        return None
 
 
 def parse_players_on_team_page(soup, team_id, team_name):
@@ -159,6 +231,17 @@ def parse_team_page(team):
     team_id = extract_id_from_url(team_url, "team")
     players, skipped_default = parse_players_on_team_page(soup, team_id, team_name)
 
+    # Получаем ID тренера со страницы сотрудников
+    coach_id = extract_coach_id_from_staff_page(team_id)
+
+    # Если тренер найден, получаем его профиль через API
+    coach_profile = None
+
+    if coach_id:
+        coach_profile = fetch_coach_profile(coach_id)
+        if REQUEST_DELAY_SEC > 0:
+            time.sleep(REQUEST_DELAY_SEC)
+
     if REQUEST_DELAY_SEC > 0:
         time.sleep(REQUEST_DELAY_SEC)
 
@@ -167,15 +250,16 @@ def parse_team_page(team):
         "name": team_name,
         "logo_url": logo_url,
         "players_ids": [p["id"] for p in players],
+        "coach_id": coach_id,
     }
 
-    return team_data, players, skipped_default
+    return team_data, players, skipped_default, coach_id, coach_profile
 
 
 def main():
     session = create_session()
 
-    print("[1/3 MT] Читаем список сборных...")
+    print("[1/3] Читаем список сборных...")
     teams = parse_teams_list(session)
     normalized_include = {normalize_team_url(url) for url in include_list if url}
     if normalized_include:
@@ -189,8 +273,10 @@ def main():
 
     teams_results = []
     players_results = []
+    coaches_profiles = []
     skipped_default_total = 0
     skipped_teams_no_photos = 0
+    coaches_found = 0
 
     futures = {}
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -202,15 +288,27 @@ def main():
             index, team = futures[future]
             team_name = team.get("name", "Unknown")
             try:
-                team_data, players, skipped_default = future.result()
+                team_data, players, skipped_default, coach_id, coach_profile = future.result()
                 skipped_default_total += skipped_default
+
+                # Обработка тренера
+                if coach_id:
+                    coaches_found += 1
+                    if coach_profile:
+                        coaches_profiles.append(coach_profile)
+                        print(f"[{done_count}/{len(teams)}] OK {team_name} players={len(players)}, coach={coach_id}")
+                    else:
+                        print(
+                            f"[{done_count}/{len(teams)}] OK {team_name} players={len(players)}, coach={coach_id} (profile not fetched)")
+                else:
+                    print(f"[{done_count}/{len(teams)}] OK {team_name} players={len(players)}, coach=None")
+
                 if not players:
                     skipped_teams_no_photos += 1
-                    print(f"[{done_count}/{len(teams)}] SKIP {team_name} no real photos")
-                    continue
+
                 teams_results.append((index, team_data))
                 players_results.append((index, players))
-                print(f"[{done_count}/{len(teams)}] OK {team_name} players={len(players)}")
+
             except Exception as exc:
                 print(f"[{done_count}/{len(teams)}] ERROR {team_name}: {exc}")
 
@@ -231,9 +329,11 @@ def main():
 
     save_json(TEAMS_FILE, all_team_data)
     save_json(PLAYERS_URLS_FILE, all_players_urls)
+    save_json(COACHES_PROFILES_FILE, coaches_profiles)
 
     print(f"\nСохранено: {TEAMS_FILE} ({len(all_team_data)} сборных)")
     print(f"Сохранено: {PLAYERS_URLS_FILE} ({len(all_players_urls)} игроков)")
+    print(f"Сохранено: {COACHES_PROFILES_FILE} ({len(coaches_profiles)} тренеров)")
     print(f"Пропущено игроков с дефолтными фото: {skipped_default_total}")
     print(f"Пропущено сборных без реальных фото игроков: {skipped_teams_no_photos}")
 

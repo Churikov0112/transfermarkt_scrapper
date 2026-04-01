@@ -9,10 +9,12 @@ from tm_common import create_session, load_json, request_with_retries
 
 TEAMS_FILE = "tm_teams.json"
 PLAYERS_FILE = "tm_players_urls.json"
+COACHES_FILE = "tm_coach_profiles.json"
 CLUBS_FILE = "tm_clubs.json"
 
 FLAGS_DIR = "flags"
-FACES_DIR = "faces"
+PLAYER_FACES_DIR = "players_faces"
+COACH_FACES_DIR = "coach_faces"
 LOGOS_DIR = "logos"
 
 MAX_WORKERS = int(os.getenv("TM_IMAGES_WORKERS", "20"))
@@ -41,8 +43,30 @@ def reset_thread_session():
 
 def ensure_dirs():
     os.makedirs(FLAGS_DIR, exist_ok=True)
-    os.makedirs(FACES_DIR, exist_ok=True)
+    os.makedirs(PLAYER_FACES_DIR, exist_ok=True)
+    os.makedirs(COACH_FACES_DIR, exist_ok=True)
     os.makedirs(LOGOS_DIR, exist_ok=True)
+
+
+def is_default_image(url):
+    """Проверяет, является ли URL ссылкой на дефолтное изображение."""
+    if not url:
+        return True
+    url_lower = url.lower()
+    # Проверяем наличие слова default в URL
+    if "default" in url_lower:
+        return True
+    # Дополнительные проверки на известные паттерны дефолтных изображений
+    default_patterns = [
+        "noimage",
+        "placeholder",
+        "avatar.svg",
+        "missing"
+    ]
+    for pattern in default_patterns:
+        if pattern in url_lower:
+            return True
+    return False
 
 
 def to_high_res_player_url(url):
@@ -56,7 +80,7 @@ def to_high_res_player_url(url):
 
 
 def download_as_png(url, output_path, timeout=30, max_retries=MAX_RETRIES):
-    if not url:
+    if not url or is_default_image(url):
         return False
     try:
         session = get_thread_session()
@@ -85,7 +109,7 @@ def collect_tasks():
     for team in teams:
         team_id = team.get("id")
         logo_url = team.get("logo_url")
-        if team_id and logo_url:
+        if team_id and logo_url and not is_default_image(logo_url):
             tasks.append({
                 "kind": "team",
                 "id": str(team_id),
@@ -97,12 +121,24 @@ def collect_tasks():
     for player in players:
         player_id = player.get("id")
         photo_url = to_high_res_player_url(player.get("photo_url"))
-        if player_id and photo_url:
+        if player_id and photo_url and not is_default_image(photo_url):
             tasks.append({
                 "kind": "player",
                 "id": str(player_id),
                 "url": photo_url,
-                "path": os.path.join(FACES_DIR, f"{player_id}.png"),
+                "path": os.path.join(PLAYER_FACES_DIR, f"{player_id}.png"),
+            })
+
+    coaches = load_json(COACHES_FILE, [])
+    for coach in coaches:
+        coach_id = coach.get("id")
+        image_url = to_high_res_player_url(coach.get("image_url"))
+        if coach_id and image_url and not is_default_image(image_url):
+            tasks.append({
+                "kind": "coach",
+                "id": str(coach_id),
+                "url": image_url,
+                "path": os.path.join(COACH_FACES_DIR, f"{coach_id}.png"),
             })
 
     clubs = load_json(CLUBS_FILE, [])
@@ -110,7 +146,7 @@ def collect_tasks():
         club_id = club.get("id")
         profile = club.get("profile") or {}
         image_url = profile.get("image")
-        if club_id and image_url:
+        if club_id and image_url and not is_default_image(image_url):
             tasks.append({
                 "kind": "club",
                 "id": str(club_id),

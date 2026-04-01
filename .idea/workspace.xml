@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2d4c183a-2a21-4c5f-926e-883ce9266ec4" name="Changes" comment="remove players ids from team">
+    <list default="true" id="2d4c183a-2a21-4c5f-926e-883ce9266ec4" name="Changes" comment="fix prepare script">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tm_1_teams.py" beforeDir="false" afterPath="$PROJECT_DIR$/tm_1_teams.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_1_teams.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/tm_1_teams_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/tm_1_teams_2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tm_999_prepare_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/tm_999_prepare_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_2_players_profiles.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_3_market_values.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_4_clubs.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_5_load_images.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_5_load_images_2.py" beforeDir="false" afterPath="$PROJECT_DIR$/tm_5_load_images_2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tm_6_compress_images.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,30 +35,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.tm_1_teams_2.executor": "Run",
-    "Python.tm_2_players_profiles_2.executor": "Run",
-    "Python.tm_3_market_values_2.executor": "Run",
-    "Python.tm_4_clubs_2.executor": "Run",
-    "Python.tm_5_load_images_2.executor": "Run",
-    "Python.tm_6_compress_images_2.executor": "Run",
-    "Python.tm_7_players_profiles_2.executor": "Run",
-    "Python.tm_7_players_stats_2.executor": "Run",
-    "Python.tm_8_players_achievements_2.executor": "Run",
-    "Python.tm_8_players_stats_2.executor": "Run",
-    "Python.tm_999_prepare_data.executor": "Run",
-    "Python.tm_9_players_achievements_2.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/egorchurikov/PycharmProjects/transfermarkt_scrapper"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.tm_1_teams_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_2_players_profiles_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_3_market_values_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_4_clubs_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_5_load_images_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_6_compress_images_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_7_players_profiles_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_7_players_stats_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_8_players_achievements_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_8_players_stats_2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_999_prepare_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tm_9_players_achievements_2.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/egorchurikov/PycharmProjects/transfermarkt_scrapper&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -62,7 +67,76 @@
       <recent name="$PROJECT_DIR$/legacy" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.tm_999_prepare_data">
+  <component name="RunManager" selected="Python.tm_6_compress_images_2">
+    <configuration name="tm_1_teams_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="transfermarkt_scrapper" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_1_teams_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="tm_2_players_profiles_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="transfermarkt_scrapper" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_2_players_profiles_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="tm_3_market_values_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="transfermarkt_scrapper" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_3_market_values_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="tm_5_load_images_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="transfermarkt_scrapper" />
       <option name="ENV_FILES" value="" />
@@ -109,82 +183,13 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="tm_7_players_stats_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="transfermarkt_scrapper" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_7_players_stats_2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="tm_8_players_achievements_2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="transfermarkt_scrapper" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_8_players_achievements_2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="tm_999_prepare_data" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="transfermarkt_scrapper" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tm_999_prepare_data.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.tm_999_prepare_data" />
-        <item itemvalue="Python.tm_8_players_achievements_2" />
-        <item itemvalue="Python.tm_7_players_stats_2" />
         <item itemvalue="Python.tm_6_compress_images_2" />
         <item itemvalue="Python.tm_5_load_images_2" />
+        <item itemvalue="Python.tm_3_market_values_2" />
+        <item itemvalue="Python.tm_2_players_profiles_2" />
+        <item itemvalue="Python.tm_1_teams_2" />
       </list>
     </recent_temporary>
   </component>
@@ -251,7 +256,31 @@
       <option name="project" value="LOCAL" />
       <updated>1774901816087</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="better data prepare">
+      <option name="closed" value="true" />
+      <created>1774907537878</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1774907537878</updated>
+    </task>
+    <task id="LOCAL-00008" summary="fix images download">
+      <option name="closed" value="true" />
+      <created>1774950212737</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1774950212737</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fix prepare script">
+      <option name="closed" value="true" />
+      <created>1774950224813</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1774950224813</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -271,7 +300,10 @@
     <MESSAGE value="optimize for mobile app" />
     <MESSAGE value="get more data" />
     <MESSAGE value="remove players ids from team" />
-    <option name="LAST_COMMIT_MESSAGE" value="remove players ids from team" />
+    <MESSAGE value="better data prepare" />
+    <MESSAGE value="fix images download" />
+    <MESSAGE value="fix prepare script" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix prepare script" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
