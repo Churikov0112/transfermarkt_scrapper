@@ -42,6 +42,31 @@ def build_player_to_team_mapping(teams_path: str) -> Dict[str, Dict[str, str]]:
     return player_to_team
 
 
+def build_country_to_team_mapping(teams_path: str) -> Dict[str, Dict[str, str]]:
+    """
+    Создаёт словарь для быстрого поиска команды (сборной) по названию страны.
+    Возвращает {country_name: {'team_id': id, 'team_name': name}}
+    """
+    if not os.path.exists(teams_path):
+        print(f"Файл {teams_path} не найден, пропускаем создание маппинга стран")
+        return {}
+
+    teams = load_json(teams_path)
+    country_to_team = {}
+
+    for team in teams:
+        team_name = team.get('name')
+        team_id = team.get('id')
+        if team_name:
+            country_to_team[team_name] = {
+                'team_id': team_id,
+                'team_name': team_name
+            }
+
+    print(f"Создан маппинг для {len(country_to_team)} стран к национальным командам")
+    return country_to_team
+
+
 def load_players_urls(urls_path: str) -> Dict[str, int]:
     """
     Загружает данные из tm_players_urls.json и создаёт словарь
@@ -233,6 +258,69 @@ def clean_clubs(clubs_path: str) -> List[Dict[str, Any]]:
     return cleaned
 
 
+def clean_legends_profiles(profiles: List[Dict[str, Any]],
+                           country_to_team: Dict[str, Dict[str, str]]) -> List[Dict[str, Any]]:
+    """
+    Преобразует список профилей легенд:
+    - переносит все поля из profile на верхний уровень
+    - удаляет из полученного объекта указанные поля
+    - добавляет club_id, club_name
+    - добавляет team_id, team_name по первой стране из citizenship
+    """
+    cleaned = []
+    fields_to_remove = {
+        'fullName', 'updatedAt', 'url', 'description', 'nameInHomeCountry',
+        'imageUrl', 'placeOfBirth', 'agent', 'socialMedia',
+        'trainerProfile', 'relatives'
+    }
+
+    for legend in profiles:
+        profile = legend.get('profile', {})
+        if not isinstance(profile, dict):
+            print(f"Предупреждение: profile имеет тип {type(profile)}, использую пустой словарь")
+            profile = {}
+
+        new_legend = {**profile}
+
+        legend_id = profile.get('id') or legend.get('id')
+        legend_name = profile.get('name') or legend.get('name')
+        if legend_id:
+            new_legend['id'] = legend_id
+        if legend_name:
+            new_legend['name'] = legend_name
+
+        club_info = profile.get('club')
+        if club_info and isinstance(club_info, dict):
+            new_legend['club_id'] = club_info.get('id')
+            new_legend['club_name'] = club_info.get('name')
+        else:
+            new_legend['club_id'] = None
+            new_legend['club_name'] = None
+
+        citizenship = profile.get('citizenship', [])
+        if isinstance(citizenship, list) and citizenship:
+            first_country = citizenship[0]
+            team_data = country_to_team.get(first_country)
+            if team_data:
+                new_legend['team_id'] = team_data['team_id']
+                new_legend['team_name'] = team_data['team_name']
+            else:
+                new_legend['team_id'] = None
+                new_legend['team_name'] = None
+        else:
+            new_legend['team_id'] = None
+            new_legend['team_name'] = None
+
+        for field in fields_to_remove:
+            new_legend.pop(field, None)
+
+        new_legend.pop('club', None)
+        new_legend.pop('shirtNumber', None)
+        cleaned.append(new_legend)
+
+    return cleaned
+
+
 def clean_teams(teams_path: str) -> List[Dict[str, Any]]:
     """
     Преобразует список команд (национальных сборных):
@@ -251,6 +339,7 @@ def main():
     # Пути к исходным файлам
     market_values_file = "tm_players_market_values.json"
     players_profiles_file = "tm_players_profiles.json"
+    legends_profiles_file = "tm_legends_profiles.json"
     players_urls_file = "tm_players_urls.json"
     clubs_file = "tm_clubs.json"
     teams_file = "tm_teams.json"
@@ -261,7 +350,10 @@ def main():
     # 0.1. Загружаем номера сборной из tm_players_urls
     team_numbers = load_players_urls(players_urls_file)
 
-    # 0.2. Загружаем полные данные из tm_players_urls для резервных данных
+    # 0.2. Создаём маппинг стран к национальным командам (для легенд)
+    country_to_team = build_country_to_team_mapping(teams_file)
+
+    # 0.3. Загружаем полные данные из tm_players_urls для резервных данных
     players_urls_data = None
     if os.path.exists(players_urls_file):
         players_urls_data = load_json(players_urls_file)
@@ -317,7 +409,24 @@ def main():
                 for p in empty_profiles[:3]:
                     print(f"  Пример: id={p.get('id')}, name={p.get('name')}, team={p.get('team_name')}")
 
-    # 4. Очищаем клубы и сохраняем
+    # 4. Очищаем профили легенд и сохраняем
+    if os.path.exists(legends_profiles_file):
+        print(f"\nОбработка {legends_profiles_file}...")
+        legends_profiles = load_json(legends_profiles_file)
+        cleaned_legends_profiles = clean_legends_profiles(legends_profiles, country_to_team)
+        save_json(cleaned_legends_profiles, "prepared_tm_legends_profiles.json")
+        print(f"Сохранено {len(cleaned_legends_profiles)} записей")
+
+        legends_teams_filled = sum(1 for p in cleaned_legends_profiles if p.get('team_id') is not None)
+        legends_with_citizenship = sum(
+            1 for p in cleaned_legends_profiles if isinstance(p.get('citizenship'), list) and p.get('citizenship')
+        )
+        print(f"  - Легенд с заполненной национальной командой: {legends_teams_filled}")
+        print(f"  - Легенд с citizenship: {legends_with_citizenship}")
+    else:
+        print(f"\nФайл {legends_profiles_file} не найден. Пропускаем.")
+
+    # 5. Очищаем клубы и сохраняем
     if os.path.exists(clubs_file):
         print(f"\nОбработка {clubs_file}...")
         cleaned_clubs = clean_clubs(clubs_file)
@@ -326,7 +435,7 @@ def main():
     else:
         print(f"\nФайл {clubs_file} не найден. Пропускаем.")
 
-    # 5. Очищаем команды и сохраняем
+    # 6. Очищаем команды и сохраняем
     if os.path.exists(teams_file):
         print(f"\nОбработка {teams_file}...")
         cleaned_teams = clean_teams(teams_file)
@@ -337,6 +446,6 @@ def main():
 
     print("\nГотово!")
 
-
+# TODO не у всех легенд праивильно смэтчатся названия стран. Нужно будет поправить вруную на название и id из tm_teams
 if __name__ == "__main__":
     main()
