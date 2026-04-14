@@ -363,8 +363,8 @@ def main():
     if os.path.exists(market_values_file):
         print(f"Обработка {market_values_file}...")
         market_with_max = add_max_market_to_market_values(market_values_file)
-        save_json(market_with_max, "prepared_tm_players_market_values.json")
-        print(f"Создан prepared_tm_players_market_values.json с {len(market_with_max)} записями")
+        save_json(market_with_max, "tm_players_market_values.json")
+        print(f"Создан tm_players_market_values.json с {len(market_with_max)} записями")
 
         # Вычисляем max_values для добавления в профили
         max_values = {item['id']: item['maxMarketValue'] for item in market_with_max}
@@ -383,9 +383,9 @@ def main():
 
     # 3. Очищаем профили игроков и сохраняем
     if profiles_with_max:
-        print("Создание prepared_tm_players_profiles.json...")
+        print("Создание tm_players_profiles.json...")
         cleaned_profiles = clean_players_profiles(profiles_with_max, player_to_team, players_urls_data)
-        save_json(cleaned_profiles, "prepared_tm_players_profiles.json")
+        save_json(cleaned_profiles, "tm_players_profiles.json")
         print(f"Сохранено {len(cleaned_profiles)} записей")
 
         # Выводим статистику
@@ -414,7 +414,7 @@ def main():
         print(f"\nОбработка {legends_profiles_file}...")
         legends_profiles = load_json(legends_profiles_file)
         cleaned_legends_profiles = clean_legends_profiles(legends_profiles, country_to_team)
-        save_json(cleaned_legends_profiles, "prepared_tm_legends_profiles.json")
+        save_json(cleaned_legends_profiles, "tm_legends_profiles.json")
         print(f"Сохранено {len(cleaned_legends_profiles)} записей")
 
         legends_teams_filled = sum(1 for p in cleaned_legends_profiles if p.get('team_id') is not None)
@@ -430,7 +430,7 @@ def main():
     if os.path.exists(clubs_file):
         print(f"\nОбработка {clubs_file}...")
         cleaned_clubs = clean_clubs(clubs_file)
-        save_json(cleaned_clubs, "prepared_tm_clubs.json")
+        save_json(cleaned_clubs, "tm_clubs.json")
         print(f"Сохранено {len(cleaned_clubs)} записей")
     else:
         print(f"\nФайл {clubs_file} не найден. Пропускаем.")
@@ -439,7 +439,7 @@ def main():
     if os.path.exists(teams_file):
         print(f"\nОбработка {teams_file}...")
         cleaned_teams = clean_teams(teams_file)
-        save_json(cleaned_teams, "prepared_tm_teams.json")
+        save_json(cleaned_teams, "tm_teams.json")
         print(f"Сохранено {len(cleaned_teams)} записей")
     else:
         print(f"\nФайл {teams_file} не найден. Пропускаем.")

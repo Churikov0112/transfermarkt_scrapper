@@ -12,8 +12,8 @@ from tm_common import create_session, load_json, request_with_retries
 TEAMS_FILE = "tm_teams.json"
 PLAYERS_FILE = "tm_players_urls.json"
 LEGENDS_FILE = "tm_legends_profiles.json"
-COACHES_FILE = "tm_coach_profiles.json"
-CLUBS_FILE = "tm_clubs.json"
+COACHES_FILE = "tm_coach_profiles_filtered.json"
+CLUBS_FILE = "tm_clubs_filtered.json"
 
 FLAGS_DIR = "flags"
 PLAYER_FACES_DIR = "players_faces"

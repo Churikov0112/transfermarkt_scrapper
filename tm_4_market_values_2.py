@@ -10,7 +10,7 @@ from tm_common import load_json, request_with_retries, save_json
 PLAYERS_FILE = "tm_players_urls.json"
 MARKET_VALUES_FILE = "tm_players_market_values.json"
 API_BASE_URL = "http://localhost:8000"
-MAX_WORKERS = int(os.getenv("TM_MARKET_WORKERS", "12"))
+MAX_WORKERS = int(os.getenv("TM_MARKET_WORKERS", "10"))
 REQUEST_DELAY_SEC = float(os.getenv("TM_MARKET_REQUEST_DELAY", "0"))
 MAX_RETRIES = int(os.getenv("TM_MARKET_MAX_RETRIES", "3"))
 
@@ -82,17 +82,20 @@ def main():
             name = player.get("name", "")
             try:
                 item = future.result()
-                if item:
+                if item is not None:
                     result_index, market_value_data = item
-                    results[result_index] = market_value_data
-                    print(f"[{done_count}/{len(players)}] OK id={player_id} name={name}")
+                    if market_value_data is not None:
+                        results[result_index] = market_value_data
+                        print(f"[{done_count}/{len(players)}] OK id={player_id} name={name}")
+                    else:
+                        print(f"[{done_count}/{len(players)}] SKIP (no market value) id={player_id} name={name}")
                 else:
                     print(f"[{done_count}/{len(players)}] SKIP id={player_id} name={name}")
             except Exception as exc:
                 print(f"[{done_count}/{len(players)}] ERROR id={player_id} name={name}: {exc}")
 
     # Формируем список для сохранения, сохраняя порядок исходных индексов
-    market_values = [results[i] for i in sorted(results) if results[i] is not None]
+    market_values = [results[i] for i in sorted(results)]
 
     save_json(MARKET_VALUES_FILE, market_values)
     print(f"\nСохранено: {MARKET_VALUES_FILE} ({len(market_values)} записей)")
